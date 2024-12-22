@@ -1,18 +1,11 @@
-//
-//  SpecialDayView.swift
-//  EverLove
-//
-//  Created by Yavuz Selim Güner on 21.12.2024.
-//
-
 import SwiftUI
-
 
 struct SpecialEventAddView: View {
     @State private var eventName: String = ""
     @State private var eventDate: Date = Date()
-    @State private var addReminder: Bool = false
+    @State private var addToCalendar: Bool = false // Hatırlatma yerine Takvime Ekle
     @State private var reminderDate: Date? = nil
+    @State private var showAlert: Bool = false
     
     @AppStorage("specialEvents") private var specialEventsData: Data = Data()
     
@@ -29,11 +22,11 @@ struct SpecialEventAddView: View {
             DatePicker("Tarih", selection: $eventDate, displayedComponents: .date)
                 .padding()
             
-            Toggle("Hatırlatma Ekle", isOn: $addReminder)
+            Toggle("Takvime Ekle", isOn: $addToCalendar) // "Hatırlatma Ekle" yerine "Takvime Ekle"
                 .padding()
             
-            if addReminder {
-                DatePicker("Hatırlatma Tarihi", selection: Binding(
+            if addToCalendar {
+                DatePicker("Takvim Tarihi", selection: Binding(
                     get: { reminderDate ?? Date() },
                     set: { reminderDate = $0 }
                 ), displayedComponents: .date)
@@ -56,6 +49,13 @@ struct SpecialEventAddView: View {
             Spacer()
         }
         .padding()
+        .alert(isPresented: $showAlert) {
+            Alert(
+                title: Text("Başarılı"),
+                message: Text("Etkinlik başarıyla eklendi!"),
+                dismissButton: .default(Text("Tamam"))
+            )
+        }
     }
     
     private func saveSpecialEvent() {
@@ -66,6 +66,7 @@ struct SpecialEventAddView: View {
         
         if let encoded = try? JSONEncoder().encode(events) {
             specialEventsData = encoded
+            showAlert = true // Gösterilecek popup'ı tetikle
         }
     }
     

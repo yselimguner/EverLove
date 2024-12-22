@@ -9,10 +9,17 @@ import SwiftUI
 
 struct PremiumView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack {
+            Text("Ekran 3")
+                .font(.largeTitle)
+                .bold()
+                .padding()
+        }
     }
 }
 
-#Preview {
-    PremiumView()
+struct ThirdView_Previews: PreviewProvider {
+    static var previews: some View {
+        PremiumView()
+    }
 }
