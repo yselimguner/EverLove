@@ -3,52 +3,99 @@ import SwiftUI
 struct SpecialEventAddView: View {
     @State private var eventName: String = ""
     @State private var eventDate: Date = Date()
-    @State private var addToCalendar: Bool = false // Hatırlatma yerine Takvime Ekle
-    @State private var reminderDate: Date? = nil
+    @State private var addToCalendar: Bool = false
     @State private var showAlert: Bool = false
-    
+    @State private var selectedEventType: EventType = .birthday
+    @State private var periodDuration: Int = 1
+
     @AppStorage("specialEvents") private var specialEventsData: Data = Data()
-    
+
+    enum EventType: String, CaseIterable, Codable {
+        case birthday = "Birthday 🎂"
+        case wedding = "Wedding Anniversary 💍"
+        case period = "Period 📅"
+        case special = "Special Day ✨"
+    }
+
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Özel Gün Ekle")
-                .font(.title)
-                .padding()
-            
-            TextField("Etkinlik Adı", text: $eventName)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
-            
-            DatePicker("Tarih", selection: $eventDate, displayedComponents: .date)
-                .padding()
-            
-            Toggle("Takvime Ekle", isOn: $addToCalendar) // "Hatırlatma Ekle" yerine "Takvime Ekle"
-                .padding()
-            
-            if addToCalendar {
-                DatePicker("Takvim Tarihi", selection: Binding(
-                    get: { reminderDate ?? Date() },
-                    set: { reminderDate = $0 }
-                ), displayedComponents: .date)
-                .padding()
-            }
-            
-            Button(action: {
-                saveSpecialEvent()
-            }) {
-                Text("Ekle")
-                    .font(.headline)
+        ZStack {
+            // Background with gradient and stars
+            LinearGradient(
+                gradient: Gradient(colors: [.mint, .blue.opacity(0.3)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            .overlay(
+                Image(systemName: "sparkles")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 200)
+                    .opacity(0.1)
+                    .offset(x: -50, y: -50)
+            )
+
+            VStack(spacing: 20) {
+                Text("Özel Gün Ekle")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
                     .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+
+                // Event Type Picker
+                HStack {
+                    Text("Etkinlik Türü:")
+                        .fontWeight(.semibold)
+                    Spacer()
+                    Picker("Seçin", selection: $selectedEventType) {
+                        ForEach(EventType.allCases, id: \.self) { event in
+                            Text(event.rawValue).tag(event)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                }
+                .padding()
+
+                // Show TextField only for Special Day
+                if selectedEventType == .special {
+                    TextField("Özel Gün Detayı", text: $eventName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
+                }
+
+                // Show Period Duration for Period Type
+                if selectedEventType == .period {
+                    HStack {
+                        Text("Kaç Gün Sürer?")
+                        Spacer()
+                        Stepper("\(periodDuration) Gün", value: $periodDuration, in: 1...10)
+                            .padding()
+                    }
+                }
+
+                // Date Picker
+                DatePicker("Tarih", selection: $eventDate, displayedComponents: .date)
+                    .padding()
+
+                // Toggle for adding to the calendar (no extra date picker)
+                Toggle("Takvime Ekle", isOn: $addToCalendar)
+                    .padding()
+
+                // Save Button
+                Button(action: saveSpecialEvent) {
+                    Text("Ekle")
+                        .font(.headline)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .padding()
+
+                Spacer()
             }
             .padding()
-            
-            Spacer()
         }
-        .padding()
         .alert(isPresented: $showAlert) {
             Alert(
                 title: Text("Başarılı"),
@@ -57,19 +104,37 @@ struct SpecialEventAddView: View {
             )
         }
     }
-    
+
     private func saveSpecialEvent() {
-        let event = SpecialEvent(name: eventName, date: eventDate, reminderDate: reminderDate)
-        
+        // Handle saving logic
         var events = loadSpecialEvents()
-        events.append(event)
-        
+
+        if selectedEventType == .period {
+            // Create events for the duration of the period
+            for day in 0..<periodDuration {
+                let periodDate = Calendar.current.date(byAdding: .day, value: day, to: eventDate) ?? eventDate
+                events.append(SpecialEvent(
+                    name: "Period Day \(day + 1)",
+                    date: periodDate,
+                    eventType: .period
+                ))
+            }
+        } else {
+            // Create a single event
+            let event = SpecialEvent(
+                name: selectedEventType == .special ? eventName : "",
+                date: eventDate,
+                eventType: selectedEventType
+            )
+            events.append(event)
+        }
+
         if let encoded = try? JSONEncoder().encode(events) {
             specialEventsData = encoded
-            showAlert = true // Gösterilecek popup'ı tetikle
+            showAlert = true
         }
     }
-    
+
     private func loadSpecialEvents() -> [SpecialEvent] {
         if let decoded = try? JSONDecoder().decode([SpecialEvent].self, from: specialEventsData) {
             return decoded
@@ -82,7 +147,7 @@ struct SpecialEvent: Identifiable, Codable {
     var id = UUID()
     var name: String
     var date: Date
-    var reminderDate: Date?
+    var eventType: SpecialEventAddView.EventType
 }
 
 struct SpecialEventAddView_Previews: PreviewProvider {
