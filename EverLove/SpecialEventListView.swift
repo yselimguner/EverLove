@@ -8,7 +8,7 @@ struct SpecialEventListView: View {
         NavigationView {
             List {
                 if specialEvents.isEmpty {
-                    VStack(alignment: .center) { // VStack içindeki elemanları ortalar
+                    VStack(alignment: .center) {
                         Text("Kayıtlı özel gün bulunamadı.")
                             .font(.headline)
                             .foregroundColor(.gray)
@@ -17,15 +17,15 @@ struct SpecialEventListView: View {
                     .background(Color.white)
                 } else {
                     ForEach(specialEvents) { event in
-                        EventRow(event: event) // Use EventRow for formatted display
+                        EventRow(event: event)
                             .swipeActions {
-                                Button(role: .destructive) {
+                                Button(role: .destructive) { 
                                     deleteEvent(event: event)
                                 } label: {
                                     Label("Sil", systemImage: "trash")
                                 }
                         }
-                        .listRowInsets(.init(top: 0, leading: 16, bottom: 0, trailing: 16)) // Adjust insets for better visuals
+                        .listRowInsets(.init(top: 0, leading: 16, bottom: 0, trailing: 16))
                     }
                 }
             }
@@ -58,7 +58,7 @@ struct EventRow: View {
     var body: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 8) {
-                Text(formattedDate(event.date)) // Call formattedDate function
+                Text(formattedDate(event.date))
                     .font(.headline)
                     .foregroundColor(.black)
                 if !event.name.isEmpty {
@@ -92,9 +92,9 @@ struct EventRow: View {
     private func eventTypeIcon(_ eventType: SpecialEventAddView.EventType) -> String {
            switch eventType {
            case .birthday:
-               return "birthday.cake.fill" // More specific SF Symbol
+               return "birthday.cake.fill"
            case .wedding:
-               return "rings"
+               return "heart.circle.fill"
            case .period:
                return "calendar"
            case .special:

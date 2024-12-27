@@ -19,32 +19,32 @@ struct MainView: View {
     @State private var showingImagePicker: Bool = false
     @State private var isFirstImagePicker: Bool = true
     @State private var showDatePicker: Bool = false
-
+    
     @AppStorage("backgroundColor") private var backgroundColorHex: String = "#FFFFFF"
-       @AppStorage("fontSize") private var fontSize: Double = 20
-       @AppStorage("fontType") private var fontType: String = "System"
+    @AppStorage("fontSize") private var fontSize: Double = 20
+    @AppStorage("fontType") private var fontType: String = "System"
     
     var backgroundColor: Color {
-            Color(hex: backgroundColorHex)
-        }
+        Color(hex: backgroundColorHex)
+    }
     
     var body: some View {
         ZStack {
             // Arka plan rengi tüm ekranı kaplar
             backgroundColor
                 .edgesIgnoringSafeArea(.all)
-
+            
             VStack(spacing: 20) {
                 HStack(spacing: 40) {
                     imagePickerView(image: $firstImage, name: $firstName, isFirst: true)
                     imagePickerView(image: $secondImage, name: $secondName, isFirst: false)
                 }
                 .padding(.top, 40)
-
+                
                 Text("Kaç Gündür Sevgiliyiz?")
                     .font(.custom(fontType, size: CGFloat(fontSize)))
                     .padding(.top, 20)
-
+                
                 Text("\(daysTogetherText())")
                     .font(.custom(fontType, size: CGFloat(fontSize)))
                     .bold()
@@ -54,22 +54,25 @@ struct MainView: View {
                     }
                 
                 if showDatePicker {
-                    DatePicker(
-                        "İlişki Başlangıç Tarihi",
-                        selection: Binding(
-                            get: { relationshipStartDate ?? Date() },
-                            set: { newValue in
-                                if newValue <= Date() {
-                                    relationshipStartDate = newValue
-                                    UserDefaults.standard.set(newValue, forKey: "startDate")
+                    VStack {
+                        DatePicker(
+                            "İlişki Başlangıç Tarihi",
+                            selection: Binding(
+                                get: { relationshipStartDate ?? Date() },
+                                set: { newValue in
+                                    if newValue <= Date() {
+                                        relationshipStartDate = newValue
+                                        UserDefaults.standard.set(newValue, forKey: "startDate")
+                                        showDatePicker = false // Close DatePicker after selection
+                                    }
                                 }
-                            }
-                        ),
-                        in: ...Date(),
-                        displayedComponents: .date
-                    )
-                    .datePickerStyle(GraphicalDatePickerStyle())
-                    .padding()
+                            ),
+                            in: ...Date(),
+                            displayedComponents: .date
+                        )
+                        .datePickerStyle(GraphicalDatePickerStyle())
+                        .padding()
+                    }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity) // İçeriği tüm ekran boyutuna yayar
@@ -86,8 +89,8 @@ struct MainView: View {
             saveRelationshipStartDate()
         }
     }
-
-
+    
+    
     private func saveNames() {
         UserDefaults.standard.set(firstName, forKey: "firstName")
         UserDefaults.standard.set(secondName, forKey: "secondName")
@@ -110,7 +113,7 @@ struct MainView: View {
         
         return "\(days) gündür sevgiliyiz"
     }
-
+    
     @ViewBuilder
     private func imagePickerView(image: Binding<UIImage?>, name: Binding<String>, isFirst: Bool) -> some View {
         VStack {
@@ -155,33 +158,33 @@ import SwiftUI
 
 struct ImagePicker: UIViewControllerRepresentable {
     @Binding var image: UIImage?
-
+    
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
         picker.delegate = context.coordinator
         return picker
     }
-
+    
     func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-
+    
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-
+    
     class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
         let parent: ImagePicker
-
+        
         init(_ parent: ImagePicker) {
             self.parent = parent
         }
-
+        
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             if let uiImage = info[.originalImage] as? UIImage {
                 parent.image = uiImage
             }
             picker.dismiss(animated: true)
         }
-
+        
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
             picker.dismiss(animated: true)
         }
